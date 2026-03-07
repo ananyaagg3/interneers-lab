@@ -15,7 +15,8 @@ def hello_name(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('hello/', hello_name),
-    path('', include('week1.urls'))
+    path('', include('week1.urls')),
+    path('', include('week2.urls')),
     # Example usage: /hello/?name=Bob
     # returns {"message": "Hello, Bob!"}
 ]
