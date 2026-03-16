@@ -1,63 +1,130 @@
 from django.shortcuts import render
-from .serializers import ProductSerializer
+from .serializers import ProductSerializer, DateRangeFilterSerializer
 from .models import Product
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+from .services import ProductService
+from bson import ObjectId
+from datetime import datetime, timedelta
 
-products = []
-products_id_counter = 1
 
 @api_view(['GET', 'POST'])
 def product_list(request):
-    global products_id_counter
-
     if request.method == 'GET':
-        return Response(products)
+        products = ProductService.get_products()
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
     
     if request.method == 'POST':
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
-            product = serializer.validated_data
-            product["id"] = products_id_counter
-            products_id_counter += 1
-            products.append(product)
-            return Response(product, status=status.HTTP_201_CREATED)
+            product = ProductService.create_product(serializer.validated_data)
+            return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def product_detail(request, id):
-
-    product = next((p for p in products if p["id"] == id), None)
+    id = ObjectId(id)
+    product = ProductService.get_product_by_id(id)
     
     if not product:
         return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-    
+
     if request.method == 'GET':
-        return Response(product)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+        
     
     elif request.method == 'PUT':
-        serializer = ProductSerializer(data=request.data)
-
+        serializer = ProductSerializer(product, data=request.data)
         if serializer.is_valid():
-            updated_data = serializer.validated_data
-            updated_data["id"] = id
-            products[products.index(product)] = updated_data
-            return Response(updated_data, status=status.HTTP_202_ACCEPTED)
+            product = ProductService.update_product(id, serializer.validated_data)
+            return Response(ProductSerializer(product).data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     elif request.method == 'DELETE':
-        products.remove(product)
+        ProductService.delete_product(id)
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+@api_view(['GET'])
+def product_updated_last_month(request):
+    last_month = datetime.utcnow() - timedelta(days=30)
+    products = Product.objects(updated_at__gte=last_month)
+
+    serializer = ProductSerializer(products, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+def product_filter_by_date(request):
+    serializer = DateRangeFilterSerializer(data=request.query_params)
+    if serializer.is_valid():
+        start_date = serializer.validated_data['start_date']
+        end_date = serializer.validated_data['end_date']
+
+        products = Product.objects(created_at__gte=start_date, created_at__lte=end_date)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    serializer = ProductSerializer(products, many=True)
+    return Response(serializer.data)
 
 
 
 
+# FOR IN-MEMORY OPERATIONS
+# products = []
+# products_id_counter = 1
+
+# @api_view(['GET', 'POST'])
+# def product_list(request):
+#     global products_id_counter
+
+#     if request.method == 'GET':
+#         return Response(products)
+    
+#     if request.method == 'POST':
+#         serializer = ProductSerializer(data=request.data)
+#         if serializer.is_valid():
+#             product = serializer.validated_data
+#             product["id"] = products_id_counter
+#             products_id_counter += 1
+#             products.append(product)
+#             return Response(product, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET', 'PUT', 'DELETE'])
+# def product_detail(request, id):
+
+#     product = next((p for p in products if p["id"] == id), None)
+    
+#     if not product:
+#         return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+#     if request.method == 'GET':
+#         return Response(product)
+    
+#     elif request.method == 'PUT':
+#         serializer = ProductSerializer(data=request.data)
+
+#         if serializer.is_valid():
+#             updated_data = serializer.validated_data
+#             updated_data["id"] = id
+#             products[products.index(product)] = updated_data
+#             return Response(updated_data, status=status.HTTP_202_ACCEPTED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+#     elif request.method == 'DELETE':
+#         products.remove(product)
+#         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 
+
+# FOR PAGINATION
 # class ProductList(ListCreateAPIView):
 #     queryset = Product.objects.order_by('id')
 #     serializer_class = ProductSerializer
@@ -73,6 +140,7 @@ def product_detail(request, id):
 #     lookup_field = 'id'
 
 
+# NORMAL FIRST WAY
 # Create your views here.
 # @api_view(['GET', 'POST'])
 # def product_list(request):
