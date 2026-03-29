@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "week2",
+    "week2.apps.Week2Config",
     "rest_framework",
 ]
 

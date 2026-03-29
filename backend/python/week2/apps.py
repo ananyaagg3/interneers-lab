@@ -2,4 +2,10 @@ from django.apps import AppConfig
 
 
 class Week2Config(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
     name = "week2"
+
+    def ready(self):
+        from .seeds import seed_product_categories
+        seed_product_categories()
+

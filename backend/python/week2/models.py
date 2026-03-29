@@ -1,10 +1,20 @@
-from mongoengine import Document, StringField, IntField, DecimalField, DateTimeField
+from mongoengine import Document, StringField, IntField, DecimalField, DateTimeField, ReferenceField
 from datetime import datetime
+
+
+class ProductCategory(Document):
+    title = StringField(max_length=200)
+    description = StringField()
+
+    def __str__(self):
+        return f'{self.title}'
+
 
 class Product(Document):
     name = StringField(max_length=200)
     description = StringField()
-    category = StringField(max_length=100)
+    # category = StringField(max_length=100)
+    category = ReferenceField(ProductCategory, null=True)
     price = DecimalField(max_digits=10, decimal_places=2)
     brand = StringField(max_length=100)
     quantity_within_the_warehouse = IntField()
@@ -19,6 +29,8 @@ class Product(Document):
 
     def __str__(self):
         return f'{self.name} {self.brand}'
+    
+
 
 
 
