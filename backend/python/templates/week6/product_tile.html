@@ -1,0 +1,31 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Products</title>
+    <link rel="stylesheet" href="{% static 'week6/style.css' %}" />
+  </head>
+  <body>
+    <h1>Product showcase</h1>
+
+    <p class="task3-hint">
+      Task 3: open <strong>DevTools</strong> (F12) → <strong>Console</strong> to see the
+      <code>/products/</code> API response.
+    </p>
+
+    <div>
+      <ul>
+        <li>id: 69ba54a21f642b2aa57a5229</li>
+        <li>name: Pen</li>
+        <li>description: Very smooth</li>
+        <li>price: $10.00</li>
+        <li>category: Stationary</li>
+        <li>brand: Reynolds</li>
+        <li>quantity within the warehouse: 100</li>
+      </ul>
+    </div>
+    <script src="{% static 'week6/product_tile.js' %}" defer></script>
+  </body>
+</html>

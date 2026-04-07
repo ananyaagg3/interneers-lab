@@ -10,12 +10,21 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
 from mongoengine import connect
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+MONGO_HOST = os.environ.get("MONGO_HOST", "localhost")
+MONGO_PORT = os.environ.get("MONGO_PORT", "27019")
+MONGO_USER = os.environ.get("MONGO_USER", "root")
+MONGO_PASS = os.environ.get("MONGO_PASSWORD", os.environ.get("MONGOPASS", "example"))
+MONGO_DB_NAME = os.environ.get("MONGO_DB_NAME", "week3_products")
+MONGO_AUTH_SOURCE = os.environ.get("MONGO_AUTH_SOURCE", "admin")
+MONGO_URI = os.environ.get("MONGO_URI")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -57,7 +66,7 @@ ROOT_URLCONF = "django_app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -89,7 +98,15 @@ DATABASES = {
     }
 }
 
-connect('week3_products', host='mongodb://root:example@localhost:27019/week3_products?authSource=admin')
+# connect('week3_products', host='mongodb://root:example@localhost:27019/week3_products?authSource=admin')
+if MONGO_URI:
+    connect(host=MONGO_URI, alias="default")
+else:
+    _host = (
+        f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}:{MONGO_PORT}/"
+        f"{MONGO_DB_NAME}?authSource={MONGO_AUTH_SOURCE}"
+    )
+    connect(MONGO_DB_NAME, host=_host, alias="default")
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -130,6 +147,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
